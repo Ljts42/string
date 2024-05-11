@@ -6,7 +6,7 @@ String::String()
 	: String(nullptr, 0)
 {}
 
-String::String(const char* other, size_t count = std::numeric_limits<size_t>::max())
+String::String(const char* other, size_t count)
 {
 	if (other != nullptr) {
 		m_size = std::min(count, strlen(other));
@@ -82,11 +82,26 @@ String& String::operator = (String&& other) noexcept
 	return *this;
 }
 
+String& String::operator += (const char other)
+{
+	if (m_size + 1 >= m_capacity) {
+		m_capacity = (m_size + 1) * 2;
+		char* tmp = new char[m_capacity];
+		strncpy(tmp, m_data, m_size);
+		delete[] m_data;
+		m_data = tmp;
+	}
+	m_data[m_size] = other;
+	++m_size;
+	m_data[m_size] = '\0';
+	return *this;
+}
+
 String& String::operator += (const char* other)
 {
 	size_t len = strlen(other);
 	if (m_size + len >= m_capacity) {
-		m_capacity = (m_capacity + len) * 2;
+		m_capacity = (m_size + len) * 2;
 		char* tmp = new char[m_capacity];
 		strncpy(tmp, m_data, m_size);
 		delete[] m_data;
@@ -101,7 +116,7 @@ String& String::operator += (const char* other)
 String& String::operator += (const String& other)
 {
 	if (m_size + other.m_size >= m_capacity) {
-		m_capacity += other.m_size * 2;
+		m_capacity = (m_size + other.m_size) * 2;
 		char* tmp = new char[m_capacity];
 		strncpy(tmp, m_data, m_size);
 		delete[] m_data;
@@ -145,6 +160,14 @@ String operator + (const String& lhs, const String& rhs)
 	String result(lhs);
 	result += rhs;
 	return result;
+}
+
+std::istream& operator >>(std::istream& in, String& str) {
+	char c;
+	while (in.get(c) && c != '\n') {
+		str += c;
+	}
+	return in;
 }
 
 std::ostream& operator << (std::ostream& out, const String& str)
